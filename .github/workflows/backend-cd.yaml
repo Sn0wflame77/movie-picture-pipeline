@@ -7,6 +7,10 @@ on:
       - main
     paths:
       - 'starter/backend/**'
+      - '.github/workflows/backend-cd.yaml'
+
+permissions:
+  contents: read
 
 defaults:
   run:
@@ -15,7 +19,7 @@ defaults:
 env:
   PYTHON_VERSION: '3.10'
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: backend
+  ECR_REPOSITORY: mp-backend
   EKS_CLUSTER_NAME: cluster
 
 jobs:
@@ -25,11 +29,108 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - name: Cache dependencies
-        uses: actions/cache@v4
+          cache: pip
+          cache-dependency-path: starter/backend/Pipfile.lock
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip pipenv
+          pipenv install --dev --deploy
+
+      - name: Run lint
+        run: pipenv run lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          path:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: starter/backend/Pipfile.lock
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip pipenv
+          pipenv install --dev --deploy
+
+      - name: Run tests
+        run: pipenv run test
+
+  build-and-push:
+    name: Build and Push Image
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    outputs:
+      image_uri: ${{ steps.image.outputs.uri }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image URI
+        id: image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: echo "uri=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Docker image
+        env:
+          IMAGE_URI: ${{ steps.image.outputs.uri }}
+        run: |
+          docker build --tag "$IMAGE_URI" .
+          docker push "$IMAGE_URI"
+
+  deploy:
+    name: Deploy to EKS
+    needs: [build-and-push]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ ASIAUOS5XUARZDFKRQON }}
+          aws-secret-access-key: ${{ F6q4SSSH0BDlDyXHaDCz3otdzOFkhJSBKihfk/8m }}
+          aws-session-token: ${{ IQoJb3JpZ2luX2VjEG0aCXVzLXdlc3QtMiJHMEUCIQCtVXeqSCAuAmH2B6Tf3tJK9FigXmaW6D9THmcxXcNd0gIgChgG6sxPuRPJX/v1P2KOZBCjA9MyWPQj1g8t3Asf7f4qvgIINhADGgwzMDYyMTMwMDMyOTkiDHVLuegh3qnZFqawtiqbApGPIBHRT0+X2hR212tEqxsXHtDcBa6FPMNvh8NfRj+9ZZhQf0AcA4dWyBmFKPYi1PyETVuQCvcxN6i11kpQpEO8jhcdXmbFdM0/V42pK9FStXuFND1YqTVh/W1LMaK+OBIreSES7Efa7WU63vJ8KrZsa0KWTKNaUamALHImAIRixA5b9XjRWdq9ZZB2yuwL2PwmeLwfkR3FJhXKsuvtlFu1TE//Zl3UnceKaseLBVSYf9JGOV1WMKJIu3kypb4uu7ZuaDU5rnipXTpnA5lQoAxpMfLU8pluXx6dfr395xKt7jmb6Ob4x9KS88alII0szwKJjtz7+Etcxl3AsGgD8hXehaBPZFEb89jYbIIqD3fg9+wVN/b6K3FaFGgw8rjp1QY6nQF3cgGz7f99ThGjCUh49gXptnZ2ehR+aObfKvtsAu1r1HqEqis+8ayCehf3nJGk4xsaVoI9zaSeIP6QR1EYHQqG7ytbkHByFCzCx97ifzhLu++iQp9Hdni+v6JikL/IvGqw0YI8QOkgptHNLTMwlLbsbCHVriOYcv6eDsQWeSGdhfWWCQk4hlVy2Td2nXwz1j6NmKLcNI+xE/woVuD0 }}
+          aws-region: ${{ us-east-1 }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+
+      - name: Apply backend manifests with the new image
+        env:
+          IMAGE_URI: ${{ needs.build-and-push.outputs.image_uri }}
+        run: |
+          sed "s|image: backend:latest|image: ${IMAGE_URI}|" k8s/deployment.yaml | kubectl apply -f -
+          kubectl apply -f k8s/service.yaml
+
+      - name: Verify backend rollout
+        run: kubectl rollout status deployment/backend --timeout=180s
