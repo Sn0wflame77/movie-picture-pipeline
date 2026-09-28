@@ -86,9 +86,11 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{  ASIAUOS5XUARZDFKRQON }}
+          aws-secret-access-key: ${{  F6q4SSSH0BDlDyXHaDCz3otdzOFkhJSBKihfk/8m }}
+          aws-session-token: ${{ IQoJb3JpZ2luX2VjEG0aCXVzLXdlc3QtMiJHMEUCIQCtVXeqSCAuAmH2B6Tf3tJK9FigXmaW6D9THmcxXcNd0gIgChgG6sxPuRPJX/v1P2KOZBCjA9MyWPQj1g8t3Asf7f4qvgIINhADGgwzMDYyMTMwMDMyOTkiDHVLuegh3qnZFqawtiqbApGPIBHRT0+X2hR212tEqxsXHtDcBa6FPMNvh8NfRj+9ZZhQf0AcA4dWyBmFKPYi1PyETVuQCvcxN6i11kpQpEO8jhcdXmbFdM0/V42pK9FStXuFND1YqTVh/W1LMaK+OBIreSES7Efa7WU63vJ8KrZsa0KWTKNaUamALHImAIRixA5b9XjRWdq9ZZB2yuwL2PwmeLwfkR3FJhXKsuvtlFu1TE//Zl3UnceKaseLBVSYf9JGOV1WMKJIu3kypb4uu7ZuaDU5rnipXTpnA5lQoAxpMfLU8pluXx6dfr395xKt7jmb6Ob4x9KS88alII0szwKJjtz7+Etcxl3AsGgD8hXehaBPZFEb89jYbIIqD3fg9+wVN/b6K3FaFGgw8rjp1QY6nQF3cgGz7f99ThGjCUh49gXptnZ2ehR+aObfKvtsAu1r1HqEqis+8ayCehf3nJGk4xsaVoI9zaSeIP6QR1EYHQqG7ytbkHByFCzCx97ifzhLu++iQp9Hdni+v6JikL/IvGqw0YI8QOkgptHNLTMwlLbsbCHVriOYcv6eDsQWeSGdhfWWCQk4hlVy2Td2nXwz1j6NmKLcNI+xE/woVuD0
+ }}
+          aws-region: ${{ us-east-1}}
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
