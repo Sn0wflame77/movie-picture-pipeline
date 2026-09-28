@@ -80,10 +80,11 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ ASIAUOS5XUARVD5PWHJX }}
+          aws-secret-access-key: ${{YAFwwXXN2sPFiIqRca8rqjl2oHQ8/pUWUn5utj/l}}
+          aws-session-token: ${{ IQoJb3JpZ2luX2VjEG8aCXVzLXdlc3QtMiJHMEUCID/ZhZGUMmKE0LhJbiOY2rGXK3ldE5qK8ZH/5yXGMVpxAiEAzvl0wf7c3mMizEx0WGx4zjICBwGAfGJujQKqc3SGzuEqvgIIOBADGgwzMDYyMTMwMDMyOTkiDKXJoOca0bXKJKTMgiqbAkUpCG4YanaOB7jB++UtON/ZFM0Rv73H+m5/8/ZxA/aKNR+Xk+tDv/JECyNqVrA4sgboOsjnlSZGJV5odSLb6D1Q1yrUaXQt+Blcmj7LIQ12usFaA1HAG2wiyvC6BRuC7Xv6hRKiwm6PdEyOJazybVHVOwNTLD63Ruq7P3Sar8oFKHnekQilQYFctYE8pqFHxJ6oWiDFBi+iO04dYCbmvUZWXydbkCRYEJqB5s2H86QtSpMBw0QfyIp7o26IeN0aMZZmeMC0UfbUdW9EXLWOTXPRjpJiUKrYGS6o2zFUFW0oZRN171aSb+NpcGcM5q7xLRyu6EtrB2Ect7z90k7NL3p5tx3SgXEuc39opQUsiorWL9VcBfmz26TzoGgw4ITq1QY6nQHShrV4hw2E5LvyPWmb8tfxQkek4kj7R/hF5Rfkhh2Z8gccdpLX3vyMHHFkCzNMZrqFELAtu9CUhQRS8Zw0RXh/tkt04BA8as6Wg2QDQHWyPgAPcT+7Lp/pNHy5TY7ZhDug8NZdlKXYN93LrhdDPh2Qnw2ffZd4rGZ57c8JR5h/EMt+6SYGVnrmjIohlhB2GznXfAE20GizHd0IFEi2
+}}
+          aws-region: ${{ us-east-1 }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -114,9 +115,10 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ ASIAUOS5XUARZDFKRQON }}
-          aws-secret-access-key: ${{ F6q4SSSH0BDlDyXHaDCz3otdzOFkhJSBKihfk/8m }}
-          aws-session-token: ${{ IQoJb3JpZ2luX2VjEG0aCXVzLXdlc3QtMiJHMEUCIQCtVXeqSCAuAmH2B6Tf3tJK9FigXmaW6D9THmcxXcNd0gIgChgG6sxPuRPJX/v1P2KOZBCjA9MyWPQj1g8t3Asf7f4qvgIINhADGgwzMDYyMTMwMDMyOTkiDHVLuegh3qnZFqawtiqbApGPIBHRT0+X2hR212tEqxsXHtDcBa6FPMNvh8NfRj+9ZZhQf0AcA4dWyBmFKPYi1PyETVuQCvcxN6i11kpQpEO8jhcdXmbFdM0/V42pK9FStXuFND1YqTVh/W1LMaK+OBIreSES7Efa7WU63vJ8KrZsa0KWTKNaUamALHImAIRixA5b9XjRWdq9ZZB2yuwL2PwmeLwfkR3FJhXKsuvtlFu1TE//Zl3UnceKaseLBVSYf9JGOV1WMKJIu3kypb4uu7ZuaDU5rnipXTpnA5lQoAxpMfLU8pluXx6dfr395xKt7jmb6Ob4x9KS88alII0szwKJjtz7+Etcxl3AsGgD8hXehaBPZFEb89jYbIIqD3fg9+wVN/b6K3FaFGgw8rjp1QY6nQF3cgGz7f99ThGjCUh49gXptnZ2ehR+aObfKvtsAu1r1HqEqis+8ayCehf3nJGk4xsaVoI9zaSeIP6QR1EYHQqG7ytbkHByFCzCx97ifzhLu++iQp9Hdni+v6JikL/IvGqw0YI8QOkgptHNLTMwlLbsbCHVriOYcv6eDsQWeSGdhfWWCQk4hlVy2Td2nXwz1j6NmKLcNI+xE/woVuD0 }}
+          aws-access-key-id: ${{ ASIAUOS5XUARVD5PWHJX }}
+          aws-secret-access-key: ${{ YAFwwXXN2sPFiIqRca8rqjl2oHQ8/pUWUn5utj/l}}
+          aws-session-token: ${{ IQoJb3JpZ2luX2VjEG8aCXVzLXdlc3QtMiJHMEUCID/ZhZGUMmKE0LhJbiOY2rGXK3ldE5qK8ZH/5yXGMVpxAiEAzvl0wf7c3mMizEx0WGx4zjICBwGAfGJujQKqc3SGzuEqvgIIOBADGgwzMDYyMTMwMDMyOTkiDKXJoOca0bXKJKTMgiqbAkUpCG4YanaOB7jB++UtON/ZFM0Rv73H+m5/8/ZxA/aKNR+Xk+tDv/JECyNqVrA4sgboOsjnlSZGJV5odSLb6D1Q1yrUaXQt+Blcmj7LIQ12usFaA1HAG2wiyvC6BRuC7Xv6hRKiwm6PdEyOJazybVHVOwNTLD63Ruq7P3Sar8oFKHnekQilQYFctYE8pqFHxJ6oWiDFBi+iO04dYCbmvUZWXydbkCRYEJqB5s2H86QtSpMBw0QfyIp7o26IeN0aMZZmeMC0UfbUdW9EXLWOTXPRjpJiUKrYGS6o2zFUFW0oZRN171aSb+NpcGcM5q7xLRyu6EtrB2Ect7z90k7NL3p5tx3SgXEuc39opQUsiorWL9VcBfmz26TzoGgw4ITq1QY6nQHShrV4hw2E5LvyPWmb8tfxQkek4kj7R/hF5Rfkhh2Z8gccdpLX3vyMHHFkCzNMZrqFELAtu9CUhQRS8Zw0RXh/tkt04BA8as6Wg2QDQHWyPgAPcT+7Lp/pNHy5TY7ZhDug8NZdlKXYN93LrhdDPh2Qnw2ffZd4rGZ57c8JR5h/EMt+6SYGVnrmjIohlhB2GznXfAE20GizHd0IFEi2
+ }}
           aws-region: ${{ us-east-1 }}
 
       - name: Setup kubectl
