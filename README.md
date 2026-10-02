@@ -1,5 +1,34 @@
 ## Student Note
+
 GitHub repo: https://github.com/Sn0wflame77/movie-picture-pipeline
+
+Frontend LoadBalancer URL:
+http://a6a4e9dd26fed4ac3a6a29c0fdd34f74-404101268.us-east-1.elb.amazonaws.com
+
+Backend LoadBalancer URL:
+http://a53fb7f9aa2224cdeac5f86863c2d54b-1452544760.us-east-1.elb.amazonaws.com:5000/movies
+
+### Screenshots
+
+Frontend CI:
+![Frontend CI](Frontend-continuous-integration.png)
+
+Frontend CD:
+![Frontend CD](Frontend-continuous-deployment.png)
+
+Backend CI:
+![Backend CI](Backend-continuous-integration.png)
+
+Backend CD:
+![Backend CD](Backend-continuous-deployment.png)
+
+Frontend Movie List (frontend ELB in address bar):
+![Frontend Movie List](Frontend-movie-list.png)
+
+Backend /movies (backend ELB in address bar):
+![Backend movies](Backend-movies.png)
+
+---
 # Movie Picture Pipeline
 
 You've been brought on as the DevOps resource for a development team that manages a web application that is a catalog of Movie Picture movies. They're in dire need of automating their development workflows in hopes of accelerating their release cycle. They'd like to use Github Actions to automate testing, building and deploying their applications to an existing Kubernetes cluster.
