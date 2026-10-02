@@ -7,10 +7,11 @@ on:
       - main
     paths:
       - 'starter/frontend/**'
+      - 'starter/backend/k8s/service.yaml'
+      - '.github/workflows/frontend-cd.yaml'
 
-defaults:
-  run:
-    working-directory: starter/frontend
+permissions:
+  contents: read
 
 env:
   NODE_VERSION: '18'
@@ -22,88 +23,133 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: starter/frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+          key: ${{ runner.os }}-frontend-npm-${{ hashFiles('starter/frontend/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-frontend-npm-
+
       - name: Install dependencies
         run: npm ci
+
       - name: Run lint
         run: npm run lint
 
   test:
     name: Test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: starter/frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+          key: ${{ runner.os }}-frontend-npm-${{ hashFiles('starter/frontend/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-frontend-npm-
+
       - name: Install dependencies
         run: npm ci
+
       - name: Run tests
         run: CI=true npm test
 
-  build-and-deploy:
-    name: Build and Deploy
+  build-and-push:
+    name: Build and Push Image
     needs: [lint, test]
+    runs-on: ubuntu-latest
+    outputs:
+      image_uri: ${{ steps.image.outputs.uri }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image URI
+        id: image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: echo "uri=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Docker image
+        env:
+          IMAGE_URI: ${{ steps.image.outputs.uri }}
+          REACT_APP_MOVIE_API_URL: /api
+        run: |
+          docker build \
+            --build-arg REACT_APP_MOVIE_API_URL="$REACT_APP_MOVIE_API_URL" \
+            --tag "$IMAGE_URI" \
+            starter/frontend
+          docker push "$IMAGE_URI"
+
+  deploy:
+    name: Deploy to EKS
+    needs: [build-and-push]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Setup NodeJS
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Install dependencies
-        run: npm ci
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ ASIAUOS5XUARVD5PWHJX}}
-          aws-secret-access-key: ${{   YAFwwXXN2sPFiIqRca8rqjl2oHQ8/pUWUn5utj/l
- }}
-          aws-session-token: ${{  IQoJb3JpZ2luX2VjEG8aCXVzLXdlc3QtMiJHMEUCID/ZhZGUMmKE0LhJbiOY2rGXK3ldE5qK8ZH/5yXGMVpxAiEAzvl0wf7c3mMizEx0WGx4zjICBwGAfGJujQKqc3SGzuEqvgIIOBADGgwzMDYyMTMwMDMyOTkiDKXJoOca0bXKJKTMgiqbAkUpCG4YanaOB7jB++UtON/ZFM0Rv73H+m5/8/ZxA/aKNR+Xk+tDv/JECyNqVrA4sgboOsjnlSZGJV5odSLb6D1Q1yrUaXQt+Blcmj7LIQ12usFaA1HAG2wiyvC6BRuC7Xv6hRKiwm6PdEyOJazybVHVOwNTLD63Ruq7P3Sar8oFKHnekQilQYFctYE8pqFHxJ6oWiDFBi+iO04dYCbmvUZWXydbkCRYEJqB5s2H86QtSpMBw0QfyIp7o26IeN0aMZZmeMC0UfbUdW9EXLWOTXPRjpJiUKrYGS6o2zFUFW0oZRN171aSb+NpcGcM5q7xLRyu6EtrB2Ect7z90k7NL3p5tx3SgXEuc39opQUsiorWL9VcBfmz26TzoGgw4ITq1QY6nQHShrV4hw2E5LvyPWmb8tfxQkek4kj7R/hF5Rfkhh2Z8gccdpLX3vyMHHFkCzNMZrqFELAtu9CUhQRS8Zw0RXh/tkt04BA8as6Wg2QDQHWyPgAPcT+7Lp/pNHy5TY7ZhDug8NZdlKXYN93LrhdDPh2Qnw2ffZd4rGZ57c8JR5h/EMt+6SYGVnrmjIohlhB2GznXfAE20GizHd0IFEi2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
 
- }}
-          aws-region: ${{ us-east-1}}
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Setup kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+
+      - name: Deploy frontend image
+        working-directory: starter/frontend/k8s
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-          REACT_APP_MOVIE_API_URL: http://localhost:5000
+          IMAGE_URI: ${{ needs.build-and-push.outputs.image_uri }}
         run: |
-          docker build \
-            --build-arg=REACT_APP_MOVIE_API_URL=$REACT_APP_MOVIE_API_URL \
-            --tag=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-            --tag=$ECR_REGISTRY/$ECR_REPOSITORY:latest
+          kustomize edit set image frontend="$IMAGE_URI"
+          kustomize build . | kubectl apply -f -
+
+      - name: Verify frontend rollout
+        run: kubectl rollout status deployment/frontend --timeout=180s
