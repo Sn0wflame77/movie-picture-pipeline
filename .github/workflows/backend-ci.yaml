@@ -7,10 +7,10 @@ on:
       - main
     paths:
       - 'starter/backend/**'
+      - '.github/workflows/backend-ci.yaml'
 
-defaults:
-  run:
-    working-directory: starter/backend
+permissions:
+  contents: read
 
 env:
   PYTHON_VERSION: '3.10'
@@ -19,6 +19,9 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: starter/backend
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,19 +30,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/share/virtualenvs
-          key: ${{ runner.os }}-pipenv-${{ hashFiles('starter/backend/Pipfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pipenv-
+          cache: pip
+          cache-dependency-path: starter/backend/Pipfile.lock
 
       - name: Install dependencies
         run: |
-          pip install pipenv
-          pipenv install
+          python -m pip install --upgrade pip pipenv
+          pipenv install --dev --deploy
 
       - name: Run lint
         run: pipenv run lint
@@ -47,6 +44,9 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: starter/backend
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -55,19 +55,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/share/virtualenvs
-          key: ${{ runner.os }}-pipenv-${{ hashFiles('starter/backend/Pipfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pipenv-
+          cache: pip
+          cache-dependency-path: starter/backend/Pipfile.lock
 
       - name: Install dependencies
         run: |
-          pip install pipenv
-          pipenv install
+          python -m pip install --upgrade pip pipenv
+          pipenv install --dev --deploy
 
       - name: Run tests
         run: pipenv run test
@@ -80,26 +74,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.local/share/virtualenvs
-          key: ${{ runner.os }}-pipenv-${{ hashFiles('starter/backend/Pipfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pipenv-
-
-      - name: Install dependencies
-        run: |
-          pip install pipenv
-          pipenv install
-
-      - name: Run tests
-        run: pipenv run test
-
-      - name: Build docker image
-        run: docker build --tag=mp-backend:latest .
+      - name: Build Docker image
+        working-directory: starter/backend
+        run: docker build --tag mp-backend:latest .
