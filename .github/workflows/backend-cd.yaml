@@ -94,7 +94,7 @@ jobs:
           ECR_BACKEND_REPO: ${{ secrets.ECR_BACKEND_REPO }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          : "${ECR_BACKEND_REPO:?Set the ECR_BACKEND_REPO GitHub secret}"
+          : "${ECR_BACKEND_REPO:?ECR_BACKEND_REPO secret is missing}"
           printf 'uri=%s:%s\n' "$ECR_BACKEND_REPO" "$IMAGE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker image
@@ -127,7 +127,6 @@ jobs:
 
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
-        
 
       - name: Deploy backend image
         working-directory: starter/backend/k8s
@@ -137,16 +136,15 @@ jobs:
           set -euo pipefail
           : "${IMAGE_URI:?Missing image URI from build job}"
 
+          kustomize edit set image backend="$IMAGE_URI"
           kustomize build . > /tmp/backend-manifests.yaml
-          sed -i "s|image: backend$|image: ${IMAGE_URI}|" /tmp/backend-manifests.yaml
-
-          grep -F "image: ${IMAGE_URI}" /tmp/backend-manifests.yaml
+          grep -F "image: $IMAGE_URI" /tmp/backend-manifests.yaml
           if grep -Fq "image: backend" /tmp/backend-manifests.yaml; then
             echo "Placeholder backend image remains in rendered manifests"
             exit 1
           fi
 
           kubectl apply -f /tmp/backend-manifests.yaml
-          kubectl rollout status deployment/backend --timeout=180s
 
-       
+      - name: Verify backend rollout
+        run: kubectl rollout status deployment/backend --timeout=180s
