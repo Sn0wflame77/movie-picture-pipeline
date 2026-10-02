@@ -131,10 +131,10 @@ jobs:
       - name: Deploy backend image
         working-directory: starter/backend/k8s
         env:
-          IMAGE_URI: ${{ needs.build-and-push.outputs.image_uri }}
+          IMAGE_URI: ${{ secrets.ECR_BACKEND_REPO }}:${{ github.sha }}
         run: |
           set -euo pipefail
-          : "${IMAGE_URI:?Missing image URI from build job}"
+          : "${IMAGE_URI:?Missing image URI}"
 
           kustomize edit set image backend="$IMAGE_URI"
           kustomize build . > /tmp/backend-manifests.yaml
